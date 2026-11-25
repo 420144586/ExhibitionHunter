@@ -1,0 +1,23 @@
+# Web framework
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+
+# Crawler - static
+httpx==0.28.1
+selectolax==0.3.27
+
+# Crawler - dynamic (JS rendering)
+playwright==1.49.1
+
+# Database
+sqlalchemy==2.0.36
+aiosqlite==0.20.0
+
+# Scheduling
+apscheduler==3.11.0
+
+# Config & utils
+pydantic==2.10.4
+pydantic-settings==2.7.1
+python-dotenv==1.0.1
+loguru==0.7.3
