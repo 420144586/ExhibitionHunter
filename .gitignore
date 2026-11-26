@@ -12,3 +12,6 @@ Thumbs.db
 
 # Cursor / VSCode workspace files
 .cursor/
+
+# 开发过程临时产物（服务日志、截图草稿）
+.tmp-dev/
