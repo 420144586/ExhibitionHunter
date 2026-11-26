@@ -1,9 +1,6 @@
 """Pipeline: clean, dedup, persist crawled items to the database."""
-from collections.abc import AsyncIterator
-from datetime import datetime
 
 from sqlalchemy import select
-from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import AsyncSessionLocal
