@@ -38,5 +38,5 @@ def start_scheduler() -> AsyncIOScheduler:
 async def stop_scheduler() -> None:
     global _scheduler
     if _scheduler is not None:
-        await _scheduler.shutdown(wait=False)
+        _scheduler.shutdown(wait=False)
         _scheduler = None
