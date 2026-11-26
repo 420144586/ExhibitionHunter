@@ -1,5 +1,6 @@
 <script setup>
 import { ref, watch } from 'vue'
+import { t } from '../i18n'
 
 const props = defineProps({
   status: { type: String, default: 'all' },
@@ -9,9 +10,9 @@ const props = defineProps({
 const emit = defineEmits(['update:status', 'update:keyword'])
 
 const STATUSES = [
-  { value: 'all', label: '全部在展' },
-  { value: 'ongoing', label: '正在展出' },
-  { value: 'upcoming', label: '即将开始' },
+  { value: 'all', key: 'tabs.all' },
+  { value: 'ongoing', key: 'tabs.ongoing' },
+  { value: 'upcoming', key: 'tabs.upcoming' },
 ]
 
 const text = ref(props.keyword)
@@ -39,13 +40,11 @@ function clearInput() {
 
 <template>
   <section class="hero">
-    <p class="hero__eyebrow">全国展会 · 每日聚合</p>
+    <p class="hero__eyebrow">{{ t('hero.eyebrow') }}</p>
 
-    <h1 class="hero__title">找到下一场值得去的展会</h1>
+    <h1 class="hero__title">{{ t('hero.title') }}</h1>
 
-    <p class="hero__lede">
-      只收录正在展出与即将开始的展会，按开幕时间排序。数据来自公开展会信息站，每天凌晨自动更新。
-    </p>
+    <p class="hero__lede">{{ t('hero.lede') }}</p>
 
     <form class="search" role="search" @submit.prevent="onSubmit">
       <svg class="search__icon" viewBox="0 0 20 20" aria-hidden="true">
@@ -58,13 +57,19 @@ function clearInput() {
         class="search__input"
         type="search"
         name="keyword"
-        placeholder="搜索展会名称，例如：食品、机床、家居"
-        aria-label="搜索展会名称"
+        :placeholder="t('hero.searchPlaceholder')"
+        :aria-label="t('hero.searchLabel')"
         autocomplete="off"
         @input="onInput"
       />
 
-      <button v-if="text" class="search__clear" type="button" aria-label="清空搜索" @click="clearInput">
+      <button
+        v-if="text"
+        class="search__clear"
+        type="button"
+        :aria-label="t('hero.clearSearch')"
+        @click="clearInput"
+      >
         <svg viewBox="0 0 16 16" aria-hidden="true">
           <path
             d="M4 4l8 8M12 4l-8 8"
@@ -75,10 +80,10 @@ function clearInput() {
         </svg>
       </button>
 
-      <button class="search__submit" type="submit">搜索</button>
+      <button class="search__submit" type="submit">{{ t('hero.search') }}</button>
     </form>
 
-    <div class="tabs" role="tablist" aria-label="按展出状态筛选">
+    <div class="tabs" role="tablist" :aria-label="t('hero.statusLabel')">
       <button
         v-for="item in STATUSES"
         :key="item.value"
@@ -89,7 +94,7 @@ function clearInput() {
         :aria-selected="item.value === status"
         @click="emit('update:status', item.value)"
       >
-        {{ item.label }}
+        {{ t(item.key) }}
       </button>
     </div>
   </section>
@@ -225,6 +230,7 @@ function clearInput() {
   font-size: 13.5px;
   font-weight: 550;
   transition: background 0.18s ease, color 0.18s ease;
+  white-space: nowrap;
 }
 
 .tabs__tab:hover {
@@ -264,6 +270,7 @@ function clearInput() {
 
   .tabs__tab {
     flex: 1 1 0;
+    padding: 7px 8px;
     text-align: center;
   }
 }

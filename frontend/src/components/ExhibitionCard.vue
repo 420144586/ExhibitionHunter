@@ -1,9 +1,9 @@
 <script setup>
 import { computed } from 'vue'
+import { locale, t } from '../i18n'
 import { accentStyle } from '../utils/accent'
 import {
-  STATUS_LABEL,
-  countdownText,
+  countdownKey,
   dateBadge,
   deriveStatus,
   durationDays,
@@ -15,20 +15,25 @@ const props = defineProps({
   item: { type: Object, required: true },
 })
 
-const badge = computed(() => dateBadge(props.item.start_date))
-const range = computed(() => formatRange(props.item.start_date, props.item.end_date))
+const badge = computed(() => dateBadge(props.item.start_date, locale.value))
+const range = computed(() => formatRange(props.item.start_date, props.item.end_date, locale.value))
 const status = computed(() => deriveStatus(props.item.start_date, props.item.end_date))
-const statusLabel = computed(() => STATUS_LABEL[status.value])
-const countdown = computed(() => countdownText(props.item.start_date, props.item.end_date))
+const statusLabel = computed(() => t(`status.${status.value}`))
 const days = computed(() => durationDays(props.item.start_date, props.item.end_date))
 const place = computed(() => [props.item.city, props.item.venue].filter(Boolean).join(' · '))
 const tint = computed(() => accentStyle(props.item.title || props.item.source_id))
 
+const countdown = computed(() => {
+  const info = countdownKey(props.item.start_date, props.item.end_date)
+  return info ? t(info.key, info.params) : ''
+})
+
 const rangeTitle = computed(() => {
-  const parts = [formatFullDate(props.item.start_date), formatFullDate(props.item.end_date)].filter(
-    Boolean,
-  )
-  return parts.length ? parts.join(' — ') : '展期待定'
+  const parts = [
+    formatFullDate(props.item.start_date, locale.value),
+    formatFullDate(props.item.end_date, locale.value),
+  ].filter(Boolean)
+  return parts.length ? parts.join(' — ') : t('card.rangeTbd')
 })
 </script>
 
@@ -46,12 +51,12 @@ const rangeTitle = computed(() => {
       <h3 class="card__title">{{ item.title }}</h3>
 
       <p class="card__place" :class="{ 'card__place--muted': !place }">
-        {{ place || '地点待定' }}
+        {{ place || t('card.placeTbd') }}
       </p>
 
       <p class="card__range" :title="rangeTitle">
-        <span>{{ range }}</span>
-        <span v-if="days" class="card__days">{{ days }} 天</span>
+        <span>{{ range || t('card.rangeTbd') }}</span>
+        <span v-if="days" class="card__days">{{ t('card.days', { n: days }) }}</span>
       </p>
 
       <p v-if="countdown" class="card__countdown">{{ countdown }}</p>

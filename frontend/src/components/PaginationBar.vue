@@ -1,5 +1,6 @@
 <script setup>
 import { computed } from 'vue'
+import { t } from '../i18n'
 
 const props = defineProps({
   page: { type: Number, required: true },
@@ -14,11 +15,9 @@ const canNext = computed(() => props.page < props.pageCount)
 </script>
 
 <template>
-  <nav class="pager" aria-label="分页">
+  <nav class="pager" aria-label="pagination">
     <p class="pager__total">
-      共 <strong>{{ total }}</strong> 场
-      <span class="pager__sep" aria-hidden="true">·</span>
-      第 {{ page }} / {{ pageCount }} 页
+      {{ t('pager.summary', { total, page, pages: pageCount }) }}
     </p>
 
     <div class="pager__controls">
@@ -28,7 +27,7 @@ const canNext = computed(() => props.page < props.pageCount)
         :disabled="!canPrev"
         @click="emit('update:page', page - 1)"
       >
-        上一页
+        {{ t('pager.prev') }}
       </button>
       <button
         class="btn btn--ghost"
@@ -36,7 +35,7 @@ const canNext = computed(() => props.page < props.pageCount)
         :disabled="!canNext"
         @click="emit('update:page', page + 1)"
       >
-        下一页
+        {{ t('pager.next') }}
       </button>
     </div>
   </nav>
@@ -58,15 +57,6 @@ const canNext = computed(() => props.page < props.pageCount)
   font-size: 13.5px;
   color: var(--text-soft);
   font-variant-numeric: tabular-nums;
-}
-
-.pager__total strong {
-  color: var(--text);
-}
-
-.pager__sep {
-  margin: 0 4px;
-  color: var(--text-faint);
 }
 
 .pager__controls {

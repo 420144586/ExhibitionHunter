@@ -1,11 +1,19 @@
 /**
- * 日期展示与状态推导。
+ * 日期展示、状态推导与倒计时。
  *
  * 后端返回的是「无时区的本地时间」字符串，例如 2026-12-05T00:00:00，
  * new Date() 在本地时区解析即可，不要再做时区换算。
+ *
+ * 与语言相关的部分（月份名、日期格式）按 locale 分支；
+ * 纯文案（"今天开幕"等）由调用方用 i18n 的 key 渲染。
  */
 
 const DAY_MS = 86400000
+
+const MONTHS_SHORT = [
+  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+]
 
 export function parseDate(value) {
   if (!value) return null
@@ -32,43 +40,62 @@ function pad(n) {
   return String(n).padStart(2, '0')
 }
 
-/** 大号日期角标：{ month: '12月', day: '05' } */
-export function dateBadge(startValue) {
+function monthLabel(date, locale) {
+  return locale === 'zh' ? `${date.getMonth() + 1}月` : MONTHS_SHORT[date.getMonth()]
+}
+
+/** 大号日期角标：中文 { month: '12月', day: '05' }，英文 { month: 'Dec', day: '05' } */
+export function dateBadge(startValue, locale = 'zh') {
   const start = parseDate(startValue)
-  if (!start) return { month: '待定', day: '--' }
-  return { month: `${start.getMonth() + 1}月`, day: pad(start.getDate()) }
+  if (!start) return { month: locale === 'zh' ? '待定' : 'TBD', day: '--' }
+  return { month: monthLabel(start, locale), day: pad(start.getDate()) }
 }
 
 /** 完整日期，用于 title 提示 */
-export function formatFullDate(value) {
+export function formatFullDate(value, locale = 'zh') {
   const date = parseDate(value)
   if (!date) return ''
-  return `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日`
+  if (locale === 'zh') {
+    return `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日`
+  }
+  return `${MONTHS_SHORT[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`
 }
 
 /**
- * 展期文案：
- *   同月   12月5日 – 7日
- *   同年   12月5日 – 1月3日
- *   跨年   2026年12月5日 – 2027年1月3日
- *   仅开始 12月5日 起
+ * 展期文案。
+ *   中文：同月 12月5日 – 7日 / 同年 12月5日 – 1月3日 / 跨年 2026年12月5日 – 2027年1月3日
+ *   英文：同月 Dec 5 – 7 / 同年 Dec 5 – Jan 3 / 跨年 Dec 5, 2026 – Jan 3, 2027
+ * 缺开始或结束只有单边文案；两边都缺时返回空串，由调用方渲染"展期待定"。
  */
-export function formatRange(startValue, endValue) {
+export function formatRange(startValue, endValue, locale = 'zh') {
   const start = parseDate(startValue)
   const end = parseDate(endValue)
 
-  if (!start && !end) return '展期待定'
-  if (!start) return `截止 ${formatFullDate(endValue)}`
-  if (!end) return `${start.getMonth() + 1}月${start.getDate()}日 起`
+  if (!start && !end) return ''
 
+  if (locale === 'zh') {
+    if (!start) return `截止 ${formatFullDate(endValue, 'zh')}`
+    if (!end) return `${start.getMonth() + 1}月${start.getDate()}日 起`
+    const sameYear = start.getFullYear() === end.getFullYear()
+    const sameMonth = sameYear && start.getMonth() === end.getMonth()
+    if (sameMonth) return `${start.getMonth() + 1}月${start.getDate()}日 – ${end.getDate()}日`
+    if (sameYear) {
+      return `${start.getMonth() + 1}月${start.getDate()}日 – ${end.getMonth() + 1}月${end.getDate()}日`
+    }
+    return `${formatFullDate(startValue, 'zh')} – ${formatFullDate(endValue, 'zh')}`
+  }
+
+  if (!start) return `Until ${formatFullDate(endValue, 'en')}`
+  if (!end) return `From ${formatFullDate(startValue, 'en')}`
   const sameYear = start.getFullYear() === end.getFullYear()
   const sameMonth = sameYear && start.getMonth() === end.getMonth()
-
-  if (sameMonth) return `${start.getMonth() + 1}月${start.getDate()}日 – ${end.getDate()}日`
-  if (sameYear) {
-    return `${start.getMonth() + 1}月${start.getDate()}日 – ${end.getMonth() + 1}月${end.getDate()}日`
+  if (sameMonth) {
+    return `${MONTHS_SHORT[start.getMonth()]} ${start.getDate()} – ${end.getDate()}`
   }
-  return `${formatFullDate(startValue)} – ${formatFullDate(endValue)}`
+  if (sameYear) {
+    return `${MONTHS_SHORT[start.getMonth()]} ${start.getDate()} – ${MONTHS_SHORT[end.getMonth()]} ${end.getDate()}`
+  }
+  return `${formatFullDate(startValue, 'en')} – ${formatFullDate(endValue, 'en')}`
 }
 
 /** 展期天数（含首尾）；缺日期返回 null */
@@ -92,33 +119,30 @@ export function deriveStatus(startValue, endValue, now = new Date()) {
   return 'ongoing'
 }
 
-export const STATUS_LABEL = {
-  ongoing: '展出中',
-  upcoming: '即将开始',
-  ended: '已结束',
-}
-
-/** 「3 天后开幕」「还有 2 天」「今天闭幕」之类的相对提示 */
-export function countdownText(startValue, endValue, now = new Date()) {
+/**
+ * 倒计时的文案 key + 参数，交给 i18n 渲染。
+ * 返回 null 表示不需要展示。
+ */
+export function countdownKey(startValue, endValue, now = new Date()) {
   const start = parseDate(startValue)
   const end = parseDate(endValue)
 
   if (start && start > now) {
     const days = dayDiff(startOfDay(now), startOfDay(start))
-    if (days <= 0) return '今天开幕'
-    if (days === 1) return '明天开幕'
-    return `${days} 天后开幕`
+    if (days <= 0) return { key: 'countdown.opensToday' }
+    if (days === 1) return { key: 'countdown.opensTomorrow' }
+    return { key: 'countdown.opensInDays', params: { n: days } }
   }
 
   if (end) {
     const lastDay = endOfDay(end)
     if (lastDay > now) {
       const days = dayDiff(startOfDay(now), startOfDay(end))
-      if (days <= 0) return '今天闭幕'
-      if (days === 1) return '明天闭幕'
-      return `还有 ${days} 天`
+      if (days <= 0) return { key: 'countdown.closesToday' }
+      if (days === 1) return { key: 'countdown.closesTomorrow' }
+      return { key: 'countdown.daysLeft', params: { n: days } }
     }
   }
 
-  return ''
+  return null
 }

@@ -1,5 +1,6 @@
 <script setup>
 import { computed } from 'vue'
+import { t } from '../i18n'
 import CardSkeleton from './CardSkeleton.vue'
 import ExhibitionCard from './ExhibitionCard.vue'
 import StatePanel from './StatePanel.vue'
@@ -23,38 +24,30 @@ const errorView = computed(() => {
   const error = props.error
   if (!error) return null
 
-  switch (error.kind) {
-    case 'network':
-      return {
-        title: '连不上后端服务',
-        message:
-          '请确认 API 已启动：在 backend 目录执行 uvicorn app.main:app --port 8000，然后重试。',
-      }
-    case 'timeout':
-      return { title: '请求超时', message: '后端响应过慢，请稍后重试。' }
-    case 'invalid':
-      return { title: '筛选条件不合法', message: error.message || '请调整条件后重试。' }
-    case 'parse':
-      return { title: '返回数据无法解析', message: error.message || '请检查后端接口输出。' }
-    default:
-      return { title: '服务返回错误', message: error.message || '请稍后重试。' }
+  const known = ['network', 'timeout', 'invalid', 'parse'].includes(error.kind)
+    ? error.kind
+    : 'http'
+  const useServerMessage = (known === 'invalid' || known === 'http') && error.message
+
+  return {
+    title: t(`error.${known}.title`),
+    message: useServerMessage ? error.message : t(`error.${known}.message`),
   }
 })
 
 const emptyView = computed(() => {
   if (props.hasFilters) {
     return {
-      title: '没有符合条件的展会',
-      message: '换个关键词，或切回「全部在展」看看。',
-      actionLabel: '清除筛选',
+      title: t('empty.filtered.title'),
+      message: t('empty.filtered.message'),
+      actionLabel: t('action.clearFilters'),
       action: 'clear',
     }
   }
   return {
-    title: '还没有采集到展会',
-    message:
-      '数据库里暂时没有未结束的展会。可以手动触发一次抓取：POST /api/exhibitions/crawl，完成后刷新本页。',
-    actionLabel: '重新加载',
+    title: t('empty.nodata.title'),
+    message: t('empty.nodata.message'),
+    actionLabel: t('action.reload'),
     action: 'retry',
   }
 })
@@ -63,8 +56,8 @@ const emptyView = computed(() => {
 <template>
   <section class="list" aria-live="polite">
     <div v-if="!error" class="list__head">
-      <h2 class="list__title">近期展会</h2>
-      <p class="list__hint">按开幕时间由近到远</p>
+      <h2 class="list__title">{{ t('list.title') }}</h2>
+      <p class="list__hint">{{ t('list.hint') }}</p>
     </div>
 
     <CardSkeleton v-if="showSkeleton" :count="Math.min(pageSize, 6)" />
@@ -74,7 +67,7 @@ const emptyView = computed(() => {
       kind="error"
       :title="errorView.title"
       :message="errorView.message"
-      action-label="重试"
+      :action-label="t('action.retry')"
       @action="emit('retry')"
     />
 

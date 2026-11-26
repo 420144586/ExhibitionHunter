@@ -1,4 +1,7 @@
 <script setup>
+import { t } from '../i18n'
+import LanguageSwitcher from './LanguageSwitcher.vue'
+
 defineProps({
   total: { type: Number, default: 0 },
   loading: { type: Boolean, default: false },
@@ -8,7 +11,7 @@ defineProps({
 <template>
   <header class="site-header">
     <div class="container site-header__inner">
-      <a class="brand" href="/" aria-label="展会猎人首页">
+      <a class="brand" href="/" aria-label="ExhibitionHunter">
         <span class="brand__mark" aria-hidden="true">
           <svg viewBox="0 0 32 32" width="32" height="32">
             <rect width="32" height="32" rx="8" fill="currentColor" />
@@ -30,20 +33,23 @@ defineProps({
         </span>
         <span class="brand__text">
           <strong>展会猎人</strong>
-          <small>ExhibitionHunter</small>
+          <small>{{ t('header.brandSub') }}</small>
         </span>
       </a>
 
-      <p class="site-header__stat">
-        <template v-if="loading">
-          <span class="site-header__dot" aria-hidden="true"></span>
-          正在同步
-        </template>
-        <template v-else-if="total > 0">
-          当前 <strong>{{ total }}</strong> 场在展或即将开始
-        </template>
-        <template v-else>数据每日 03:00 自动更新</template>
-      </p>
+      <div class="site-header__right">
+        <p class="site-header__stat">
+          <template v-if="loading">
+            <span class="site-header__dot" aria-hidden="true"></span>
+            {{ t('header.syncing') }}
+          </template>
+          <template v-else-if="total > 0">
+            {{ t('header.count', { n: total }) }}
+          </template>
+          <template v-else>{{ t('header.hint') }}</template>
+        </p>
+        <LanguageSwitcher />
+      </div>
     </div>
   </header>
 </template>
@@ -90,6 +96,7 @@ defineProps({
   font-size: 16px;
   font-weight: 650;
   letter-spacing: 0.02em;
+  white-space: nowrap;
 }
 
 .brand__text small {
@@ -99,17 +106,22 @@ defineProps({
   text-transform: uppercase;
 }
 
+.site-header__right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
 .site-header__stat {
   display: inline-flex;
   align-items: center;
   gap: 7px;
   font-size: 13px;
   color: var(--text-soft);
-}
-
-.site-header__stat strong {
-  color: var(--text);
-  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .site-header__dot {
@@ -132,13 +144,15 @@ defineProps({
   }
 }
 
+@media (max-width: 720px) {
+  .site-header__stat {
+    display: none;
+  }
+}
+
 @media (max-width: 560px) {
   .brand__text small {
     display: none;
-  }
-
-  .site-header__stat {
-    font-size: 12px;
   }
 }
 </style>
