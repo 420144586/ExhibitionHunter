@@ -14,8 +14,23 @@ class Base(DeclarativeBase):
     """Declarative base for all ORM models."""
 
 
+def _database_url() -> str:
+    """Return the engine URL, resolving SQLite paths to absolute form.
+
+    ``settings.db_path`` already resolves relative SQLite paths against the
+    backend root, so the database location no longer depends on the process
+    working directory. Windows absolute paths are converted to the URL form
+    (forward slashes plus a ``sqlite+aiosqlite:///`` drive-letter prefix);
+    non-SQLite URLs are returned unchanged.
+    """
+    url = settings.database_url
+    if url.startswith("sqlite"):
+        return f"sqlite+aiosqlite:///{settings.db_path.as_posix()}"
+    return url
+
+
 engine = create_async_engine(
-    settings.database_url,
+    _database_url(),
     echo=settings.debug,
     future=True,
 )
