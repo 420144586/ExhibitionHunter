@@ -50,6 +50,15 @@ const rangeTitle = computed(() => {
     <div class="card__body">
       <h3 class="card__title">{{ item.title }}</h3>
 
+      <a
+        v-if="item.source_url"
+        class="card__url"
+        :href="item.source_url"
+        target="_blank"
+        rel="noopener noreferrer"
+        :title="item.source_url"
+      >{{ item.source_url }}</a>
+
       <p class="card__place" :class="{ 'card__place--muted': !place }">
         {{ place || t('card.placeTbd') }}
       </p>
@@ -138,6 +147,20 @@ const rangeTitle = computed(() => {
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+.card__url {
+  font-size: 12px;
+  font-family: var(--mono);
+  color: var(--accent);
+  text-decoration: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.card__url:hover {
+  text-decoration: underline;
 }
 
 .card__place {
